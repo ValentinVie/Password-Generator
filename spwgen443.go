@@ -56,13 +56,56 @@ var patternval string = `pattern (set of symbols defining password)
 // Outputs      : 0 if successful test, -1 if failure
 
 func generatePasword(length int8, pattern string, webflag bool) string {
-	if len(pattern) == 0{
-		fmt.Printf("No pattern\n")
-		for i:= 0; i>length; i++{
-			
+	pwd := "" // Start with nothing and add code
+	var options string = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~!@#$%^&*()-_=+{}[]:;/?<>,.|\`
+	len_opt := len(options)
+
+	var options_webflag string = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890`
+	len_opt_webflag := len(options_webflag)
+
+	var caracters string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	len_caracters := len(caracters)
+
+	var lower_caracters string = "abcdefghijklmnopqrstuvwxyz"
+	len_lower_caracters := len(lower_caracters)
+
+	var upper_caracters string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	len_upper_caracters := len(upper_caracters)
+
+	var specials string = `~!@#$%^&*()-_=+{}[]:;/?<>,.|\`
+	len_specials := len(specials)
+
+	if len(pattern) == 0 { // No pattern
+		if webflag{
+			for i := int8(0); i<length; i++{
+				pwd = pwd + string(options_webflag[rand.Intn(len_opt_webflag)])
+			}
+		} else {
+			for i := int8(0); i<length; i++{
+				pwd = pwd + string(options[rand.Intn(len_opt)])
+			}
+		}
+	} else { // There is a pattern we override others flags
+		for i := 0; i < len(pattern); i++{ // for every char in pattern
+			if pattern[i] == byte('d'){
+				pwd = pwd + strconv.Itoa(rand.Intn(10))
+			} else if pattern[i] == byte('c'){
+				pwd = pwd + string(caracters[rand.Intn(len_caracters)])
+			} else if pattern[i] == byte('l'){
+					pwd = pwd + string(lower_caracters[rand.Intn(len_lower_caracters)])
+			} else if pattern[i] == byte('u'){
+					pwd = pwd + string(upper_caracters[rand.Intn(len_upper_caracters)])
+			} else if pattern[i] == byte('w'){
+				// TO BE DONE
+			} else if pattern[i] == byte('s'){
+				pwd = pwd + string(specials[rand.Intn(len_specials)])
+			} else {
+				fmt.Printf("Wrong arguments in the pattern. They have been ignored.\n")
+			}
 		}
 	}
-	pwd := "" // Start with nothing and add code
+
+
 
 	// Now return the password
 	return pwd
