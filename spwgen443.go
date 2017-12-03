@@ -15,6 +15,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"bufio" //read the dictionary
+	"unicode/utf8" // read the lenght of a string with stresses
 	"math/rand"
 	"strconv"
 	"time"
@@ -38,10 +40,72 @@ var patternval string = `pattern (set of symbols defining password)
 
         Note: the pattern overrides other flags, e.g., -w`
 
+var dictPath string = "/usr/share/dict/words"
+var nbEntries int = 0 // number of entries in the dict
 // You may want to create more global variables
 
-//
-// Functions
+func lineCounter(filePath string) int{ // count the number of entries in the file
+	dico, err := os.Open(filePath)
+	if err != nil {
+		fmt.Printf("Couldn't find the file... Abort")
+  	os.Exit(-1)
+  }
+  defer dico.Close() // close the dictionary once the function returns
+	count := 0
+	scanner := bufio.NewScanner(dico)
+
+	for scanner.Scan(){
+		count++
+	}
+	return count
+}
+
+func validWord(word string) bool{ // the word contains only alpha caracters
+	for i := range word {
+		if word[i] < 'A' || word[i] > 'z' {
+			return false
+		} else if word[i] > 'Z' && word[i] < 'a' {
+			return false
+		}
+	}
+	return true
+}
+
+func findWordFromDictionary(lenght int) string{ // 100411 words in the dictionary
+	if nbEntries == 0 {
+		nbEntries = lineCounter(dictPath)
+		fmt.Printf("There are %v entries in the dictionary.\n", nbEntries)
+	}
+
+	dico, err := os.Open(dictPath)
+	if err != nil {
+		fmt.Printf("Couldn't find the dictionary... Abort")
+  	os.Exit(-1)
+  }
+  defer dico.Close() // close the dictionary once the function returns
+
+  scanner := bufio.NewScanner(dico)
+	line_number := rand.Intn(nbEntries) // offset
+	i := 0
+	// we will go accross line_number lines before selecting a word of the correct length
+	for i < line_number{ // offset
+		scanner.Scan()
+		i++
+	}
+
+	for scanner.Scan(){ // we take the next word that fits
+		//fmt.Println(scanner.Text(), len(scanner.Text()))
+		if utf8.RuneCountInString(scanner.Text()) == lenght && validWord(scanner.Text()){
+			return scanner.Text()
+		}
+		if i == nbEntries - 1 {//we reached the end of the file we start over
+			dico.Seek(0, 0)
+			i = 0
+		}
+		i++
+	}
+	return "ERROR"
+}
 
 // Up to you to decide which functions you want to add
 
@@ -86,7 +150,8 @@ func generatePasword(length int8, pattern string, webflag bool) string {
 			}
 		}
 	} else { // There is a pattern we override others flags
-		for i := 0; i < len(pattern); i++{ // for every char in pattern
+		i := 0
+		for i < len(pattern){ // for every char in pattern
 			if pattern[i] == byte('d'){
 				pwd = pwd + strconv.Itoa(rand.Intn(10))
 			} else if pattern[i] == byte('c'){
@@ -96,12 +161,47 @@ func generatePasword(length int8, pattern string, webflag bool) string {
 			} else if pattern[i] == byte('u'){
 					pwd = pwd + string(upper_caracters[rand.Intn(len_upper_caracters)])
 			} else if pattern[i] == byte('w'){
-				// TO BE DONE
+				var word_length1, word_length2 int
+				var err1, err2 error
+				if i + 1 < len(pattern){
+					word_length1, err1 = strconv.Atoi(string(pattern[i+1]))
+				}
+				if i + 2 < len(pattern){
+					word_length2, err2 = strconv.Atoi(string(pattern[i+1])+string(pattern[i+2]))
+				}
+				if err1 != nil{
+					fmt.Printf("Specify the lenght of the word in the pattern.\n")
+					os.Exit(-1)
+				}
+
+				if err2 == nil && i + 2 < len(pattern){
+					if word_length2 > 0 && word_length2 < 15{
+						pwd += findWordFromDictionary(word_length2)
+						i += 2
+					} else{
+						fmt.Printf("The lenght of the word specified is too long or too short.\n")
+						os.Exit(-1)
+					}
+				}else if err1 == nil && i + 1 < len(pattern){
+					if word_length1 > 0 {
+						pwd += findWordFromDictionary(word_length1)
+						i++
+					} else{
+						fmt.Printf("The lenght specified is too short.\n")
+						os.Exit(-1)
+					}
+				} else {
+					fmt.Printf("Specify the lenght of the word in the pattern.\n")
+					os.Exit(-1)
+				}
 			} else if pattern[i] == byte('s'){
 				pwd = pwd + string(specials[rand.Intn(len_specials)])
 			} else {
-				fmt.Printf("Wrong arguments in the pattern. They have been ignored.\n")
+				fmt.Printf("Wrong arguments in the pattern.\n")
+				fmt.Printf(patternval+"\n")
+				os.Exit(-1)
 			}
+			i++
 		}
 	}
 
@@ -123,8 +223,8 @@ func main() {
 
 	// Setup options for the program content
 	rand.Seed(time.Now().UTC().UnixNano())
-	helpflag := getopt.Bool('h', "", "help (this menu)")
-	webflag := getopt.Bool('w', "", "web flag (no symbol characters, e.g., no &*...)")
+	helpflag := getopt.Bool('h', "help (this menu)")
+	webflag := getopt.Bool('w', "web flag (no symbol characters, e.g., no &*...)")
 	length := getopt.String('l', "", "length of password (in characters)")
 	pattern := getopt.String('p', "", patternval)
 
@@ -162,7 +262,9 @@ func main() {
 		}
 	}
 
-
+	if(*helpflag){
+		getopt.Usage()
+	}
 	// Now generate the password and print it out
 	pwd := generatePasword(plength, *pattern, *webflag)
 	fmt.Printf("Generated password:  %s\n", pwd)
