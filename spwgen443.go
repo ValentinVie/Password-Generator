@@ -205,8 +205,6 @@ func generatePasword(length int8, pattern string, webflag bool) string {
 		}
 	}
 
-
-
 	// Now return the password
 	return pwd
 }
