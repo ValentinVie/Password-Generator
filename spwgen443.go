@@ -44,7 +44,7 @@ var dictPath string = "/usr/share/dict/words"
 var nbEntries int = 0 // number of entries in the dict
 // You may want to create more global variables
 
-func lineCounter(filePath string) int{ // count the number of entries in the file
+func lineCounter(filePath string) int{ // count the number of entries in the dictionary
 	dico, err := os.Open(filePath)
 	if err != nil {
 		fmt.Printf("Couldn't find the file... Abort")
@@ -71,7 +71,11 @@ func validWord(word string) bool{ // the word contains only alpha caracters
 	return true
 }
 
-func findWordFromDictionary(lenght int) string{ // 100411 words in the dictionary
+func findWordFromDictionary(lenght int) string{
+	if lenght <= 0 || lenght >= 15{
+		return "ERROR"
+	}
+	// find a random word of lenght "lenght" in the dictionary file
 	if nbEntries == 0 {
 		nbEntries = lineCounter(dictPath)
 		fmt.Printf("There are %v entries in the dictionary.\n", nbEntries)
@@ -152,51 +156,48 @@ func generatePasword(length int8, pattern string, webflag bool) string {
 	} else { // There is a pattern we override others flags
 		i := 0
 		for i < len(pattern){ // for every char in pattern
-			if pattern[i] == byte('d'){
+			if pattern[i] == byte('d'){ // digits
 				pwd = pwd + strconv.Itoa(rand.Intn(10))
-			} else if pattern[i] == byte('c'){
+			} else if pattern[i] == byte('c'){ // char
 				pwd = pwd + string(caracters[rand.Intn(len_caracters)])
-			} else if pattern[i] == byte('l'){
+			} else if pattern[i] == byte('l'){ // char lower case
 					pwd = pwd + string(lower_caracters[rand.Intn(len_lower_caracters)])
-			} else if pattern[i] == byte('u'){
+			} else if pattern[i] == byte('u'){ // char upper case
 					pwd = pwd + string(upper_caracters[rand.Intn(len_upper_caracters)])
-			} else if pattern[i] == byte('w'){
+			} else if pattern[i] == byte('w'){ // word where the length is specified
 				var word_length1, word_length2 int
 				var err1, err2 error
-				if i + 1 < len(pattern){
+				if i + 1 < len(pattern){ // check if length is specified
 					word_length1, err1 = strconv.Atoi(string(pattern[i+1]))
 				}
-				if i + 2 < len(pattern){
+				if i + 2 < len(pattern){ // check if length is specified
 					word_length2, err2 = strconv.Atoi(string(pattern[i+1])+string(pattern[i+2]))
 				}
-				if err1 != nil{
-					fmt.Printf("Specify the lenght of the word in the pattern.\n")
-					os.Exit(-1)
-				}
 
-				if err2 == nil && i + 2 < len(pattern){
+				if err2 == nil && i + 2 < len(pattern){ // wXX where XX is a number
 					if word_length2 > 0 && word_length2 < 15{
 						pwd += findWordFromDictionary(word_length2)
 						i += 2
-					} else{
+					} else{ // lenght not correct
 						fmt.Printf("The lenght of the word specified is too long or too short.\n")
 						os.Exit(-1)
 					}
-				}else if err1 == nil && i + 1 < len(pattern){
+				}else if err1 == nil && i + 1 < len(pattern){ // wX where X is a number
 					if word_length1 > 0 {
 						pwd += findWordFromDictionary(word_length1)
 						i++
-					} else{
+					} else{ // length <= 0...
 						fmt.Printf("The lenght specified is too short.\n")
 						os.Exit(-1)
 					}
-				} else {
-					fmt.Printf("Specify the lenght of the word in the pattern.\n")
-					os.Exit(-1)
+				} else { // w no length specified, we randomly select one.
+					var x = rand.Intn(14) + 1 //avoid word of length 0
+					fmt.Println(x)
+					pwd += findWordFromDictionary(x)
 				}
-			} else if pattern[i] == byte('s'){
+			} else if pattern[i] == byte('s'){ // special caracter
 				pwd = pwd + string(specials[rand.Intn(len_specials)])
-			} else {
+			} else { //Abort, wrong arguments in the pattern
 				fmt.Printf("Wrong arguments in the pattern.\n")
 				fmt.Printf(patternval+"\n")
 				os.Exit(-1)
