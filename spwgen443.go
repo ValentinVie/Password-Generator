@@ -42,7 +42,14 @@ var patternval string = `pattern (set of symbols defining password)
 
 var dictPath string = "/usr/share/dict/words"
 var nbEntries int = 0 // number of entries in the dict
-// You may want to create more global variables
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Function     : lineCounter
+// Description  : Count the number of lines in a file, for a dictionary it counts the number of words it contains 
+//
+// Inputs       : The path towards the file
+// Outputs      : The number of line, if the path is incorrect the programs stops we cannot find the dictionary
 
 func lineCounter(filePath string) int{ // count the number of entries in the dictionary
 	dico, err := os.Open(filePath)
@@ -60,6 +67,14 @@ func lineCounter(filePath string) int{ // count the number of entries in the dic
 	return count
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Function     : validWord
+// Description  : Check if the word contains only alpha caracters
+//
+// Inputs       : the word
+// Outputs      : True if it contains only alpha caracters False otherwise
+
 func validWord(word string) bool{ // the word contains only alpha caracters
 	for i := range word {
 		if word[i] < 'A' || word[i] > 'z' {
@@ -70,6 +85,14 @@ func validWord(word string) bool{ // the word contains only alpha caracters
 	}
 	return true
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Function     : findWordFromDictionary
+// Description  : Return a random word of the length specified ifrom the dictionary
+//
+// Inputs       : length - length of the word expected 0<length<=15
+// Outputs      : a word if correct, ERROR otherwise
 
 func findWordFromDictionary(lenght int) string{
 	if lenght <= 0 || lenght >= 15{
@@ -110,8 +133,6 @@ func findWordFromDictionary(lenght int) string{
 	}
 	return "ERROR"
 }
-
-// Up to you to decide which functions you want to add
 
 ////////////////////////////////////////////////////////////////////////////////
 //
