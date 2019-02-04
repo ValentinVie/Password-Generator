@@ -191,7 +191,7 @@ func generatePasword(length int8, pattern string, webflag bool) string {
 				if i + 1 < len(pattern){ // check if length is specified
 					word_length1, err1 = strconv.Atoi(string(pattern[i+1]))
 				}
-				if i + 2 < len(pattern){ // check if length is specified
+				if i + 2 < len(pattern){ // check if length is specified on 2 caracters
 					word_length2, err2 = strconv.Atoi(string(pattern[i+1])+string(pattern[i+2]))
 				}
 
@@ -213,7 +213,6 @@ func generatePasword(length int8, pattern string, webflag bool) string {
 					}
 				} else { // w no length specified, we randomly select one.
 					var x = rand.Intn(14) + 1 //avoid word of length 0
-					fmt.Println(x)
 					pwd += findWordFromDictionary(x)
 				}
 			} else if pattern[i] == byte('s'){ // special caracter
@@ -275,7 +274,7 @@ func main() {
 			os.Exit(-1)
 		}
 		if temp <= 0 || temp > 64 {
-			fmt.Printf("Length passed to long or invalid, default value (16) used.\n")
+			fmt.Printf("Length passed too long or invalid, default value (16) used.\n")
 			plength = 16
 		} else {
 			plength = int8(temp)
